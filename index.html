@@ -534,8 +534,8 @@ button.card{border:0;width:100%;text-align:left;cursor:pointer;font:inherit;colo
 
   /* ---- เสียงเอฟเฟกต์ cyber: สังเคราะห์เองด้วย Web Audio ไม่โหลดไฟล์ภายนอก ปิดเป็นค่าเริ่มต้น ---- */
   var audioCtx = null;
-  var soundOn = false;
-  try { soundOn = localStorage.getItem("nutfx_sfx") === "on"; } catch(e){}
+  var soundOn = true;
+  try { if(localStorage.getItem("nutfx_sfx") === "off") soundOn = false; } catch(e){}
 
   function getCtx(){
     if(!audioCtx){
