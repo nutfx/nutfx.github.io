@@ -260,6 +260,7 @@ img{max-width:100%;display:block;}
   display:flex;flex-direction:column;gap:9px;text-decoration:none;
   transition:background .18s ease,color .18s ease;
 }
+button.card{border:0;width:100%;text-align:left;cursor:pointer;font:inherit;color:inherit;appearance:none;-webkit-appearance:none;}
 .card:hover,.card:focus-visible{background:var(--void);color:var(--bone);}
 .card small{font:600 11px/1 var(--data);letter-spacing:.2em;color:var(--ash-dim);}
 .card b{font-size:clamp(19px,2.6vw,31px);font-weight:700;letter-spacing:-.01em;line-height:1.25;word-break:break-word;}
@@ -487,21 +488,21 @@ img{max-width:100%;display:block;}
     <h2 class="slate__t">พร้อม<em>เริ่มงาน</em><br>ทักมาได้เลย</h2>
 
     <div class="cards">
-      <a class="card" href="tel:0918365557">
+      <button class="card" type="button" data-copy="091-836-5557">
         <small>โทรศัพท์</small>
         <b>091-836-5557</b>
-        <u>กดเพื่อโทร</u>
-      </a>
+        <u>กดเพื่อคัดลอก</u>
+      </button>
       <a class="card" href="https://line.me/ti/p/~next3nline" target="_blank" rel="noopener">
         <small>LINE ID</small>
         <b>next3nline</b>
         <u>เปิด LINE</u>
       </a>
-      <a class="card" href="mailto:hi.iam.nut@gmail.com">
+      <button class="card" type="button" data-copy="hi.iam.nut@gmail.com">
         <small>อีเมล</small>
         <b>hi.iam.nut@gmail.com</b>
-        <u>ส่งอีเมล</u>
-      </a>
+        <u>กดเพื่อคัดลอก</u>
+      </button>
     </div>
 
     <div class="slate__foot">
@@ -573,27 +574,43 @@ img{max-width:100%;display:block;}
   var pb = document.getElementById("printBtn");
   if(pb) pb.addEventListener("click", function(){ window.print(); });
 
+  /* ---- คัดลอกข้อความ (ใช้ร่วมกันทั้งการ์ดติดต่อและปุ่มคัดลอกรวม) ---- */
+  function copyText(text, cb){
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(function(){ cb(true); }, function(){ cb(false); });
+    } else {
+      var ta = document.createElement("textarea");
+      ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.select();
+      var ok = false;
+      try { ok = document.execCommand("copy"); } catch(e){ ok = false; }
+      document.body.removeChild(ta);
+      cb(ok);
+    }
+  }
+
+  /* ---- กดการ์ดโทรศัพท์ / อีเมล = คัดลอกทันที ---- */
+  document.querySelectorAll(".card[data-copy]").forEach(function(card){
+    var label = card.querySelector("u");
+    var original = label ? label.textContent : "";
+    card.addEventListener("click", function(){
+      copyText(card.dataset.copy, function(ok){
+        if(!label) return;
+        label.textContent = ok ? "คัดลอกแล้ว" : "คัดลอกไม่ได้";
+        setTimeout(function(){ label.textContent = original; }, 2000);
+      });
+    });
+  });
+
   /* ---- copy contact ---- */
   var cb = document.getElementById("copyBtn");
   var msg = document.getElementById("copyMsg");
   if(cb){
     cb.addEventListener("click", function(){
-      var text = cb.dataset.copy;
-      function done(ok){
+      copyText(cb.dataset.copy, function(ok){
         msg.textContent = ok ? "คัดลอกแล้ว" : "คัดลอกไม่ได้ — ใช้ปุ่มด้านบนแทนได้เลย";
         setTimeout(function(){ msg.textContent = ""; }, 2600);
-      }
-      if(navigator.clipboard && navigator.clipboard.writeText){
-        navigator.clipboard.writeText(text).then(function(){ done(true); }, function(){ done(false); });
-      } else {
-        var ta = document.createElement("textarea");
-        ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
-        document.body.appendChild(ta); ta.select();
-        var ok = false;
-        try { ok = document.execCommand("copy"); } catch(e){ ok = false; }
-        document.body.removeChild(ta);
-        done(ok);
-      }
+      });
     });
   }
 })();
