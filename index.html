@@ -567,6 +567,9 @@ button.card{border:0;width:100%;text-align:left;cursor:pointer;font:inherit;colo
   function sfxCopy(){ beep(700, 700, 0.05, "square", 0.09); setTimeout(function(){ beep(1050, 1050, 0.07, "square", 0.09); }, 55); }
   function sfxOn(){ beep(160, 1500, 0.28, "sawtooth", 0.08); }
   function sfxOff(){ beep(900, 140, 0.18, "sawtooth", 0.07); }
+  function sfxHover(){ beep(650, 550, 0.035, "square", 0.04); }
+  var tickFlip = false;
+  function sfxTick(){ tickFlip = !tickFlip; beep(tickFlip ? 1500 : 1150, tickFlip ? 1500 : 1150, 0.02, "square", 0.05); }
 
   var soundBtn = document.getElementById("soundToggle");
   var soundLabel = document.getElementById("soundToggleLabel");
@@ -592,6 +595,9 @@ button.card{border:0;width:100%;text-align:left;cursor:pointer;font:inherit;colo
 
   document.querySelectorAll(".rail__tick,.btn,.clip").forEach(function(el){
     el.addEventListener("click", function(){ sfxClick(); });
+  });
+  document.querySelectorAll(".rail__tick,.btn,.clip,.card,.soundtoggle").forEach(function(el){
+    el.addEventListener("mouseenter", function(){ sfxHover(); });
   });
 
   /* ---- ถ้าไม่มีไฟล์ nut.jpg ให้กลายเป็นสเลท ไม่ใช่รูปพัง ---- */
@@ -624,6 +630,7 @@ button.card{border:0;width:100%;text-align:left;cursor:pointer;font:inherit;colo
   var secs = ticks.map(function(t){ return document.getElementById(t.dataset.sec); });
   var line = document.querySelector(".rail__line");
   var raf = 0;
+  var lastTickY = window.scrollY;
 
   function paint(){
     raf = 0;
@@ -631,6 +638,11 @@ button.card{border:0;width:100%;text-align:left;cursor:pointer;font:inherit;colo
     var p = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
     if(head && line) head.style.transform = "translateY(" + (p * line.offsetHeight) + "px)";
     if(readPct) readPct.textContent = (p * 100 < 10 ? "0" : "") + Math.round(p * 100) + "%";
+
+    if(Math.abs(window.scrollY - lastTickY) >= 34){
+      lastTickY = window.scrollY;
+      sfxTick();
+    }
 
     var mark = window.scrollY + window.innerHeight * 0.38, cur = 0;
     secs.forEach(function(s, i){ if(s && s.offsetTop <= mark) cur = i; });
