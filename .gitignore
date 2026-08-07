@@ -6,3 +6,6 @@
 !.gitignore
 !index.html
 !Nut.jpg
+
+# ห้ามแตะ ห้าม track เด็ดขาด
+/The Secret/
