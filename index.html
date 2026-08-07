@@ -568,8 +568,39 @@ button.card{border:0;width:100%;text-align:left;cursor:pointer;font:inherit;colo
   function sfxOn(){ beep(160, 1500, 0.28, "sawtooth", 0.08); }
   function sfxOff(){ beep(900, 140, 0.18, "sawtooth", 0.07); }
   function sfxHover(){ beep(650, 550, 0.035, "square", 0.04); }
-  var tickFlip = false;
-  function sfxTick(){ tickFlip = !tickFlip; beep(tickFlip ? 1500 : 1150, tickFlip ? 1500 : 1150, 0.02, "square", 0.05); }
+
+  /* ---- เสียงเลื่อนจอ: click ของกลไกจริง ๆ (noise burst กรองความถี่) ไม่ใช่เสียงร้อง ---- */
+  var noiseBuf = null;
+  function getNoiseBuf(ctx){
+    if(!noiseBuf || noiseBuf.sampleRate !== ctx.sampleRate){
+      var len = Math.floor(ctx.sampleRate * 0.03);
+      noiseBuf = ctx.createBuffer(1, len, ctx.sampleRate);
+      var data = noiseBuf.getChannelData(0);
+      for(var i = 0; i < len; i++){ data[i] = Math.random() * 2 - 1; }
+    }
+    return noiseBuf;
+  }
+  function sfxTick(){
+    if(!soundOn) return;
+    var ctx = getCtx();
+    if(!ctx) return;
+    function fire(){
+      var src = ctx.createBufferSource();
+      src.buffer = getNoiseBuf(ctx);
+      var filt = ctx.createBiquadFilter();
+      filt.type = "bandpass";
+      filt.frequency.value = 2000 + Math.random() * 1200;
+      filt.Q.value = 7;
+      var gain = ctx.createGain();
+      var now = ctx.currentTime;
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.22, now + 0.002);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.018);
+      src.connect(filt); filt.connect(gain); gain.connect(ctx.destination);
+      src.start(now); src.stop(now + 0.02);
+    }
+    if(ctx.state === "suspended"){ ctx.resume().then(fire); } else { fire(); }
+  }
 
   var soundBtn = document.getElementById("soundToggle");
   var soundLabel = document.getElementById("soundToggleLabel");
@@ -639,7 +670,7 @@ button.card{border:0;width:100%;text-align:left;cursor:pointer;font:inherit;colo
     if(head && line) head.style.transform = "translateY(" + (p * line.offsetHeight) + "px)";
     if(readPct) readPct.textContent = (p * 100 < 10 ? "0" : "") + Math.round(p * 100) + "%";
 
-    if(Math.abs(window.scrollY - lastTickY) >= 34){
+    if(Math.abs(window.scrollY - lastTickY) >= 11){
       lastTickY = window.scrollY;
       sfxTick();
     }
