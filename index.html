@@ -261,6 +261,8 @@ button.card{border:0;width:100%;text-align:left;cursor:pointer;font:inherit;colo
 .card:hover,.card:focus-visible{background:var(--void);color:var(--bone);}
 .card small{font:600 11px/1 var(--data);letter-spacing:.2em;color:var(--ash-dim);}
 .card b{font-size:clamp(19px,2.6vw,31px);font-weight:700;letter-spacing:-.01em;line-height:1.25;word-break:break-word;}
+.card .qr{align-self:flex-start;width:120px;height:120px;background:#fff;padding:8px;}
+.card .qr img{width:100%;height:100%;display:block;}
 .card u{text-decoration:none;font:600 11px/1 var(--data);letter-spacing:.16em;color:var(--yellow-deep);margin-top:auto;padding-top:12px;}
 .card:hover u,.card:focus-visible u{color:var(--yellow);}
 .slate__foot{display:flex;flex-wrap:wrap;gap:14px 26px;align-items:center;margin-top:clamp(24px,3.4vw,36px);
@@ -480,7 +482,8 @@ button.card{border:0;width:100%;text-align:left;cursor:pointer;font:inherit;colo
       <button class="card" type="button" data-copy="next3nline">
         <small>LINE ID</small>
         <b>next3nline</b>
-        <u>กดเพื่อคัดลอก</u>
+        <span class="qr"><img src="LINE.png" alt="สแกน QR เพื่อเพิ่มเพื่อน LINE next3nline" loading="lazy"></span>
+        <u>กดเพื่อคัดลอก &middot; หรือสแกน QR</u>
       </button>
       <button class="card" type="button" data-copy="hi.iam.nut@gmail.com">
         <small>อีเมล</small>
