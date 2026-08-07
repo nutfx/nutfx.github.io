@@ -670,7 +670,7 @@ button.card{border:0;width:100%;text-align:left;cursor:pointer;font:inherit;colo
     if(head && line) head.style.transform = "translateY(" + (p * line.offsetHeight) + "px)";
     if(readPct) readPct.textContent = (p * 100 < 10 ? "0" : "") + Math.round(p * 100) + "%";
 
-    if(Math.abs(window.scrollY - lastTickY) >= 11){
+    if(Math.abs(window.scrollY - lastTickY) >= 44){
       lastTickY = window.scrollY;
       sfxTick();
     }
