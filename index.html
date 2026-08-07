@@ -111,9 +111,27 @@ img{max-width:100%;display:block;}
 .topbar__id{color:var(--bone);}
 .topbar__mid{display:none;}
 @media (min-width:760px){.topbar__mid{display:block;}}
+.topbar__right{display:flex;align-items:center;gap:16px;}
 .live{display:inline-flex;align-items:center;gap:7px;color:var(--green);}
 .live i{width:6px;height:6px;background:var(--green);border-radius:50%;animation:rec 1.7s ease-in-out infinite;}
 @keyframes rec{0%,100%{opacity:1;}50%{opacity:.15;}}
+.soundtoggle{
+  display:inline-flex;align-items:center;gap:8px;
+  border:1px solid var(--rule);background:transparent;color:var(--ash);cursor:pointer;
+  padding:6px 10px;font:600 11px/1 var(--data);letter-spacing:.14em;text-transform:uppercase;
+  transition:color .18s ease,border-color .18s ease;
+}
+.soundtoggle:hover{color:var(--bone);border-color:var(--ash);}
+.soundtoggle[aria-pressed="true"]{color:var(--blood-lit);border-color:var(--blood-lit);}
+.soundtoggle__bars{display:inline-flex;align-items:flex-end;gap:2px;height:10px;}
+.soundtoggle__bars i{width:2px;background:currentColor;opacity:.35;transform:scaleY(.4);transition:opacity .15s ease;}
+.soundtoggle__bars i:nth-child(1){height:5px;}
+.soundtoggle__bars i:nth-child(2){height:10px;}
+.soundtoggle__bars i:nth-child(3){height:7px;}
+.soundtoggle[aria-pressed="true"] .soundtoggle__bars i{opacity:1;animation:sfxbar 1s ease-in-out infinite;}
+.soundtoggle[aria-pressed="true"] .soundtoggle__bars i:nth-child(2){animation-delay:.15s;}
+.soundtoggle[aria-pressed="true"] .soundtoggle__bars i:nth-child(3){animation-delay:.3s;}
+@keyframes sfxbar{0%,100%{transform:scaleY(.4);}50%{transform:scaleY(1);}}
 
 /* ============ HERO ============ */
 .hero{padding:clamp(36px,7vw,90px) var(--pad) clamp(28px,5vw,56px);}
@@ -324,7 +342,13 @@ button.card{border:0;width:100%;text-align:left;cursor:pointer;font:inherit;colo
   <header class="topbar">
     <span class="topbar__id">NUTFX</span>
     <span class="topbar__mid">PORTFOLIO</span>
-    <span class="live"><i></i>เปิดรับงาน</span>
+    <div class="topbar__right">
+      <span class="live"><i></i>เปิดรับงาน</span>
+      <button class="soundtoggle" type="button" id="soundToggle" aria-pressed="false" aria-label="เปิดเสียงเอฟเฟกต์">
+        <span class="soundtoggle__bars" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span id="soundToggleLabel">SFX OFF</span>
+      </button>
+    </div>
   </header>
 
   <!-- ================= HERO ================= -->
@@ -508,6 +532,61 @@ button.card{border:0;width:100%;text-align:left;cursor:pointer;font:inherit;colo
 (function(){
   "use strict";
 
+  /* ---- เสียงเอฟเฟกต์ cyber: สังเคราะห์เองด้วย Web Audio ไม่โหลดไฟล์ภายนอก ปิดเป็นค่าเริ่มต้น ---- */
+  var audioCtx = null;
+  var soundOn = false;
+  try { soundOn = localStorage.getItem("nutfx_sfx") === "on"; } catch(e){}
+
+  function getCtx(){
+    if(!audioCtx){
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if(AC) audioCtx = new AC();
+    }
+    return audioCtx;
+  }
+  function beep(f0, f1, dur, type, peak){
+    if(!soundOn) return;
+    var ctx = getCtx();
+    if(!ctx) return;
+    if(ctx.state === "suspended") ctx.resume();
+    var osc = ctx.createOscillator();
+    var gain = ctx.createGain();
+    var now = ctx.currentTime;
+    osc.type = type || "square";
+    osc.frequency.setValueAtTime(f0, now);
+    if(f1 && f1 !== f0) osc.frequency.exponentialRampToValueAtTime(f1, now + dur);
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(peak || 0.06, now + 0.006);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.start(now); osc.stop(now + dur + 0.03);
+  }
+  function sfxClick(){ beep(320, 900, 0.08, "square", 0.05); }
+  function sfxCopy(){ beep(700, 700, 0.05, "square", 0.05); setTimeout(function(){ beep(1050, 1050, 0.07, "square", 0.05); }, 55); }
+  function sfxOn(){ beep(160, 1500, 0.28, "sawtooth", 0.045); }
+  function sfxOff(){ beep(900, 140, 0.18, "sawtooth", 0.04); }
+
+  var soundBtn = document.getElementById("soundToggle");
+  var soundLabel = document.getElementById("soundToggleLabel");
+  function paintSound(){
+    if(!soundBtn) return;
+    soundBtn.setAttribute("aria-pressed", soundOn ? "true" : "false");
+    if(soundLabel) soundLabel.textContent = soundOn ? "SFX ON" : "SFX OFF";
+  }
+  paintSound();
+  if(soundBtn){
+    soundBtn.addEventListener("click", function(){
+      soundOn = !soundOn;
+      try { localStorage.setItem("nutfx_sfx", soundOn ? "on" : "off"); } catch(e){}
+      paintSound();
+      if(soundOn) sfxOn(); else sfxOff();
+    });
+  }
+
+  document.querySelectorAll(".rail__tick,.btn,.clip").forEach(function(el){
+    el.addEventListener("click", function(){ sfxClick(); });
+  });
+
   /* ---- ถ้าไม่มีไฟล์ nut.jpg ให้กลายเป็นสเลท ไม่ใช่รูปพัง ---- */
   var img = document.getElementById("portrait");
   var frame = document.getElementById("frame");
@@ -581,6 +660,7 @@ button.card{border:0;width:100%;text-align:left;cursor:pointer;font:inherit;colo
     var original = label ? label.textContent : "";
     card.addEventListener("click", function(){
       copyText(card.dataset.copy, function(ok){
+        if(ok) sfxCopy();
         if(!label) return;
         label.textContent = ok ? "คัดลอกแล้ว" : "คัดลอกไม่ได้";
         setTimeout(function(){ label.textContent = original; }, 2000);
@@ -594,6 +674,7 @@ button.card{border:0;width:100%;text-align:left;cursor:pointer;font:inherit;colo
   if(cb){
     cb.addEventListener("click", function(){
       copyText(cb.dataset.copy, function(ok){
+        if(ok) sfxCopy();
         msg.textContent = ok ? "คัดลอกแล้ว" : "คัดลอกไม่ได้ — ใช้ปุ่มด้านบนแทนได้เลย";
         setTimeout(function(){ msg.textContent = ""; }, 2600);
       });
