@@ -548,23 +548,25 @@ button.card{border:0;width:100%;text-align:left;cursor:pointer;font:inherit;colo
     if(!soundOn) return;
     var ctx = getCtx();
     if(!ctx) return;
-    if(ctx.state === "suspended") ctx.resume();
-    var osc = ctx.createOscillator();
-    var gain = ctx.createGain();
-    var now = ctx.currentTime;
-    osc.type = type || "square";
-    osc.frequency.setValueAtTime(f0, now);
-    if(f1 && f1 !== f0) osc.frequency.exponentialRampToValueAtTime(f1, now + dur);
-    gain.gain.setValueAtTime(0, now);
-    gain.gain.linearRampToValueAtTime(peak || 0.06, now + 0.006);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + dur);
-    osc.connect(gain); gain.connect(ctx.destination);
-    osc.start(now); osc.stop(now + dur + 0.03);
+    function fire(){
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      var now = ctx.currentTime;
+      osc.type = type || "square";
+      osc.frequency.setValueAtTime(f0, now);
+      if(f1 && f1 !== f0) osc.frequency.exponentialRampToValueAtTime(f1, now + dur);
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(peak || 0.09, now + 0.006);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(now); osc.stop(now + dur + 0.03);
+    }
+    if(ctx.state === "suspended"){ ctx.resume().then(fire); } else { fire(); }
   }
-  function sfxClick(){ beep(320, 900, 0.08, "square", 0.05); }
-  function sfxCopy(){ beep(700, 700, 0.05, "square", 0.05); setTimeout(function(){ beep(1050, 1050, 0.07, "square", 0.05); }, 55); }
-  function sfxOn(){ beep(160, 1500, 0.28, "sawtooth", 0.045); }
-  function sfxOff(){ beep(900, 140, 0.18, "sawtooth", 0.04); }
+  function sfxClick(){ beep(320, 900, 0.08, "square", 0.09); }
+  function sfxCopy(){ beep(700, 700, 0.05, "square", 0.09); setTimeout(function(){ beep(1050, 1050, 0.07, "square", 0.09); }, 55); }
+  function sfxOn(){ beep(160, 1500, 0.28, "sawtooth", 0.08); }
+  function sfxOff(){ beep(900, 140, 0.18, "sawtooth", 0.07); }
 
   var soundBtn = document.getElementById("soundToggle");
   var soundLabel = document.getElementById("soundToggleLabel");
@@ -576,10 +578,15 @@ button.card{border:0;width:100%;text-align:left;cursor:pointer;font:inherit;colo
   paintSound();
   if(soundBtn){
     soundBtn.addEventListener("click", function(){
-      soundOn = !soundOn;
+      if(soundOn){
+        sfxOff();
+        soundOn = false;
+      } else {
+        soundOn = true;
+        sfxOn();
+      }
       try { localStorage.setItem("nutfx_sfx", soundOn ? "on" : "off"); } catch(e){}
       paintSound();
-      if(soundOn) sfxOn(); else sfxOff();
     });
   }
 
